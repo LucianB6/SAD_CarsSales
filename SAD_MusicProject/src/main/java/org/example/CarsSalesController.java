@@ -20,8 +20,13 @@ public class CarsSalesController {
     }
 
     @GetMapping("/statistici/{carModel}")
-    public List<Object[]> getStatisticiMasina(@PathVariable String carModel) {
-        System.out.println("Cars:" + carsSalesService.getStatisticiMasina(carModel));
+    public List<CarsSales> getStatisticiMasina(@PathVariable String carModel) {
+
+        List<CarsSales> result = carsSalesService.getStatisticiMasina(carModel);
+        for (CarsSales car: result
+             ) {
+            System.out.println("Cars:" + car.toString());
+        }
         return carsSalesService.getStatisticiMasina(carModel);
     }
 }

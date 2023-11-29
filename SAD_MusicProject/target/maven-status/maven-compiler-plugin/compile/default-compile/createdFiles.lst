@@ -1,0 +1,5 @@
+org\example\CarsSales.class
+org\example\CarsSalesController.class
+org\example\MySpringApplication.class
+org\example\CarsSalesRepository.class
+org\example\CarsSalesService.class

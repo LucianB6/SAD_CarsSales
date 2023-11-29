@@ -14,7 +14,7 @@ public class CarsSalesService {
         this.carsSalesRepository = carsSalesRepository;
     }
 
-    public List<Object[]> getStatisticiMasina(String carModel) {
+    public List<CarsSales> getStatisticiMasina(String carModel) {
         return carsSalesRepository.getStatisticiMasina(carModel);
     }
 }
