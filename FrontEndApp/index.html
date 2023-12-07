@@ -1,0 +1,497 @@
+<html>
+<head>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap">
+  <title>Charts</title>
+  <style>
+    h1 {
+      text-align: center;
+      color: #3366cb;
+      font-family: 'Nunito', sans-serif;
+      font-size: 50px;
+    }
+    #yearForm label, #yearForm select {
+      display: inline-block;
+      margin-right: 10px; /* Distanță între elementele în linie */
+    }
+
+    #yearForm{
+      color: #3366cb;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+    }
+
+    label {
+      color: #3366cb;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      margin-right: 10px; /* Distanță între etichetă și elementul de selecție */
+    }
+
+    /* Stil pentru elementul de selecție */
+    select {
+      color: #3366cb;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      padding: 5px;
+      margin-bottom: 10px; /* Distanță între elementele de selecție */
+    }
+
+    /* Stil pentru containerul curve_chart */
+    #curve_chart {
+      text-align: center;
+    }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 40px;
+    }
+
+    .chart {
+      margin: 20px 0;
+    }
+
+    #chart_div, #piechart {
+      width: 450px;
+      height: 500px;
+    }
+    label, select {
+      display: block; /* Fiecare element pe linie nouă */
+      margin-bottom: 10px; /* Distanță între elemente */
+    }
+  </style>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawVisualization);
+    google.charts.setOnLoadCallback(drawPieChart);
+    google.charts.setOnLoadCallback(drawLineChart);
+    google.charts.setOnLoadCallback(drawChart);
+
+    window.onload = function() {
+      drawChart();
+    };
+    function submitForm() {
+      // Obține valorile introduse de utilizator pentru minYear și maxYear
+      var minYear = document.forms['yearForm']['minYear'].value;
+      var maxYear = document.forms['yearForm']['maxYear'].value;
+
+      // Aici poți face ceva cu valorile, cum ar fi să le trimiți către funcția fetchData
+      console.log('Min Year:', minYear);
+      console.log('Max Year:', maxYear);
+
+      // Apelează funcția fetchData cu anii primiți
+      fetchData(minYear, maxYear);
+    }
+
+    function fetchData(minYear, maxYear) {
+      // Asigură-te că minYear și maxYear sunt valori valide
+      if (!minYear || !maxYear) {
+        console.error('Please provide valid values for minYear and maxYear');
+        return;
+      }
+
+      // Construiește URL-ul cu valorile date de utilizator
+      const url = `http://localhost:9091/api/vanzari-masini/statistici/${minYear}/${maxYear}`;
+
+      // Realizează request-ul
+      fetch(url)
+        .then(response => {
+          // Verifică starea răspunsului HTTP
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          // Convertește răspunsul în format JSON
+          return response.json();
+        })
+        .then(data => {
+          // Folosește datele primite în răspuns
+          console.log(data);
+
+          // Apelează funcția drawVisualization cu datele primite
+          drawVisualization(data);
+        })
+        .catch(error => {
+          console.error('Error fetching car statistics:', error);
+        });
+    }
+
+    function drawVisualization(data) {
+      // Some raw data (not necessarily accurate)
+
+      var chartData = [['carMake + carModel', 'profit', 'carYear']];
+
+      // Populate the chart data with values
+      data.forEach(entry => {
+        chartData.push([entry.carMake + ' '+ entry.carModel, entry.profit, entry.carYear]);
+      });
+
+      console.log(chartData);
+      var dataChart = google.visualization.arrayToDataTable(chartData);
+
+      // Create the DataTable from the chart data
+      var options = {
+        title: 'Most Profitable Cars depending on the years interval',
+        seriesType: 'bars',
+        series: { 2: { type: 'line' } },
+      };
+
+      // Create the ComboChart
+      var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+      chart.draw(dataChart, options);
+
+      // Draw the Pie Chart
+      drawPieChart();
+      drawChart();
+    }
+    function drawPieChart() {
+      // Asigură-te că minYear și maxYear sunt valori valide
+      const url = `http://localhost:9091/api/vanzari-masini/statistici/masini_inchiriate/allRentedCars`;
+
+      // Realizează request-ul
+      fetch(url)
+        .then(response => {
+          // Verifică starea răspunsului HTTP
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          // Convertește răspunsul în format JSON
+          return response.json();
+        })
+        .then(data => {
+          // Folosește datele primite în răspuns
+          console.log(data);
+
+          // Desenează diagrama direct aici, fără a mai apela o altă funcție
+          var chartData2 = [['carMake + carModel', 'count']];
+
+          // Populatează datele diagramei cu valorile din răspuns
+          data.forEach(entry => {
+            // Adaugă un spațiu între carMake și carModel
+            var label = entry.carMake + ' ' + entry.carModel;
+            chartData2.push([label, entry.count]);
+          });
+
+          var chartData2 = google.visualization.arrayToDataTable(chartData2);
+
+          var options = {
+            title: 'Rented Cars from DealerShip'
+          };
+
+          var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+          chart.draw(chartData2, options);
+        })
+        .catch(error => {
+          console.error('Error fetching car statistics:', error);
+        });
+    }
+
+
+    function loadCarNames() {
+      const url = 'http://localhost:9091/api/vanzari-masini/statistici/masini_inchiriate/allCarsName';
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          // Obține elementul select din HTML
+          var select = document.getElementById('carSelect');
+
+          // Adaugă fiecare nume de mașină ca opțiune în dropdown
+          data.forEach(carInfo => {
+            // Descompune șirul în producător și model
+            var [carMake, carModel] = carInfo.split(',');
+
+            var option = document.createElement('option');
+            option.value = carMake + ' ' + carModel;
+            option.text = carMake + ' ' + carModel;
+            console.log(option);
+            select.add(option);
+          });
+
+          // Adaugă un eveniment pentru a trata schimbările de selecție
+          select.addEventListener('change', function() {
+            // Aici poți adăuga logica pentru a face ceva cu mașina selectată
+            console.log('Masina selectata:', select.value);
+
+            // Descompune valoarea selectată pentru a obține make și model separat
+            var [selectedCarMake, selectedCarModel] = select.value.split(' ');
+
+            // Apelează funcția fetchCarData pentru a prelua datele mașinii selectate
+            fetchCarData(selectedCarMake, selectedCarModel);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching car names:', error);
+        });
+    }
+
+    function fetchCarData(selectedCarMake, selectedCarModel) {
+      const url = `http://localhost:9091/api/vanzari-masini/statistici/masini_inchiriate/${selectedCarMake}/${selectedCarModel}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          // Apelează drawLineChart cu datele obținute
+          drawLineChart(data);
+        })
+        .catch(error => {
+          console.error('Error fetching car data:', error);
+        });
+    }
+
+    function drawLineChart(data) {
+      var chartData = [['carMake + carModel', 'carYear', 'carPrice']];
+
+      // Populate the chart data with values
+      data.forEach(entry => {
+        chartData.push([entry.carMake + ' ' + entry.carModel, entry.carYear, entry.carPrice]);
+      });
+
+      var chartDataFormatted = google.visualization.arrayToDataTable(chartData);
+
+      var options = {
+        title: 'Car\'s Price per Year',
+        curveType: 'function',
+        legend: { position: 'bottom' }
+      };
+
+      var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+      chart.draw(chartDataFormatted, options);
+    }
+
+    // La început, apelează funcția loadCarNames pentru a încărca opțiunile în dropdown
+    loadCarNames();
+
+    function loadCarNames2() {
+      const url = 'http://localhost:9091/api/vanzari-masini/statistici/name';
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          // Obține elementul select din HTML
+          var select1 = document.getElementById('carSelect1');
+          var select2 = document.getElementById('carSelect2');
+
+          // Adaugă fiecare nume de mașină ca opțiune în dropdown
+          data.forEach(carMake => {
+            var option1 = document.createElement('option');
+            option1.value = carMake;
+            option1.text = carMake; // Textul opțiunii va fi același cu make-ul
+
+            var option2 = document.createElement('option');
+            option2.value = carMake;
+            option2.text = carMake; // Textul opțiunii va fi același cu make-ul
+
+            select1.add(option1);
+            select2.add(option2);
+          });
+
+          // Adaugă un eveniment pentru a trata schimbările de selecție pentru select1
+          select1.addEventListener('change', function() {
+            // Aici poți adăuga logica pentru a face ceva cu mașina selectată
+            console.log('Masina selectata 1:', select1.value);
+            fetchCarData1(select1.value, select2.value, true);
+          });
+
+          // Adaugă un eveniment pentru a trata schimbările de selecție pentru select2
+          select2.addEventListener('change', function() {
+            // Aici poți adăuga logica pentru a face ceva cu mașina selectată
+            console.log('Masina selectata 2:', select2.value);
+            fetchCarData1(select1.value, select2.value, false);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching car names:', error);
+        });
+    }
+
+
+    function fetchCarData1(carMake1, carMake2, isOldData) {
+      const url1 = `http://localhost:9091/api/vanzari-masini/statistici/${carMake1}`;
+      const url2 = `http://localhost:9091/api/vanzari-masini/statistici/${carMake2}`;
+
+      // Folosește Promise.all pentru a face ambele solicitări de date simultan
+      Promise.all([
+        fetch(url1)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .catch(error => {
+            console.error('Error fetching car data 1:', error);
+          }),
+        fetch(url2)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .catch(error => {
+            console.error('Error fetching car data 2:', error);
+          })
+      ])
+        .then(([data1, data2]) => {
+          // Apelează drawChart cu datele obținute
+          drawChart(carMake1, carMake2, data1, data2);
+        })
+        .catch(error => {
+          console.error('Error fetching car data:', error);
+        });
+    }
+
+    // Wait for the user to select car makes before fetching and displaying data
+    function waitForUserSelection() {
+      var select1 = document.getElementById('carSelect1');
+      var select2 = document.getElementById('carSelect2');
+
+      select1.addEventListener('change', function () {
+        // When the first car make is selected, wait for the second selection
+        select2.addEventListener('change', function () {
+          // When the second car make is selected, fetch and display data
+          fetchAndDisplayData(select1.value, select2.value);
+        });
+      });
+    }
+
+    // Fetch and display data based on user selection
+    function fetchAndDisplayData(carMake1, carMake2) {
+      fetchCarData1(carMake1, carMake2, true);
+    }
+
+    // The rest of your existing code
+
+    // Make sure to call waitForUserSelection when the page loads
+    window.onload = function () {
+      waitForUserSelection();
+    };
+
+    function drawChart(carMake1, carMake2, data1, data2) {
+      console.log('Data 1 in drawChart:', data1);
+      console.log('Data 2 in drawChart:', data2);
+      // [['carMake carModel', 'maxTorqueNp', 'maxTorqueRpm', 'maxPowerBhp', 'maxPowerRpm', 'engineDisplacement']];
+      if (data1 != null) {
+        console.log(data1[0].carModel);
+
+        // Definește coloanele
+        var columns = ['carMake carModel', 'maxTorqueNp', 'maxTorqueRpm', 'maxPowerBhp', 'maxPowerRpm', 'engineDisplacement'];
+
+        // Creează un obiect pentru DataTable și adaugă coloanele
+        var oldData1 = new google.visualization.DataTable();
+        columns.forEach(column => {
+          oldData1.addColumn(typeof data1[0][column] === 'number' ? 'number' : 'string', column);
+        });
+
+        // Adaugă rândul de date
+        var rowData = columns.map(column => data1[0][column]);
+        oldData1.addRow(rowData);
+      }   else {
+        // console.log(data1[1].carModel)
+        var oldData = google.visualization.arrayToDataTable([
+          ['', ''],
+          ['', 0],
+          ['', 0],
+          ['', 0],
+          ['', 0]
+        ]);
+      }
+      if (data2 != null) {
+        console.log(data1[0].carModel);
+
+        // Definește coloanele
+        var columns2 = ['carMake carModel', 'maxTorqueNp', 'maxTorqueRpm', 'maxPowerBhp', 'maxPowerRpm', 'engineDisplacement'];
+
+        // Creează un obiect pentru DataTable și adaugă coloanele
+        var newData1 = new google.visualization.DataTable();
+        columns2.forEach(column => {
+          newData1.addColumn(typeof data2[0][column] === 'number' ? 'number' : 'string', column);
+        });
+
+        // Adaugă rândul de date
+        var rowData1 = columns.map(column => data2[0][column]);
+        newData1.addRow(rowData1);
+      } else {
+        var newData = google.visualization.arrayToDataTable([
+          ['', ''],
+          ['', 0],
+          ['', 0],
+          ['', 0],
+          ['', 0]
+        ]);
+      }
+
+      var colChartBefore = new google.visualization.ColumnChart(document.getElementById('colchart_before'));
+      var colChartAfter = new google.visualization.ColumnChart(document.getElementById('colchart_after'));
+      var colChartDiff = new google.visualization.ColumnChart(document.getElementById('colchart_diff'))
+      var barChartDiff = new google.visualization.BarChart(document.getElementById('barchart_diff'));
+
+      var options = { legend: { position: 'top' } };
+    if (data1 == null) {
+      colChartBefore.draw(oldData, options);
+    }else {
+      colChartBefore.draw(oldData1, options);
+    }
+
+    if(data2 == null) {
+      colChartAfter.draw(newData, options);
+    }
+    else {
+      colChartAfter.draw(newData1, options);
+    }
+
+    if (data1 == null && data2 == null) {
+      var diffData = colChartDiff.computeDiff(oldData, newData);
+      colChartDiff.draw(diffData, options);
+      barChartDiff.draw(diffData, options);
+    }
+    else {
+      var diffData1 = colChartDiff.computeDiff(oldData1, newData1);
+      colChartDiff.draw(diffData1, options);
+      barChartDiff.draw(diffData1, options);
+    }
+      loadCarNames2()
+    }
+  </script>
+</head>
+<body>
+<h1 align="center" style="accent-color: cadetblue">Charts</h1>
+<div class="chart-container">
+  <div id="chart_div" class="chart"></div>
+
+  <form id="yearForm">
+    <!-- Adaugă câmpul pentru minYear -->
+    <label for="minYear">Min Year:</label>
+    <input type="number" id="minYear" name="minYear" placeholder="Enter min year" required>
+
+    <!-- Adaugă câmpul pentru maxYear -->
+    <label for="maxYear">Max Year:</label>
+    <input type="number" id="maxYear" name="maxYear" placeholder="Enter max year" required>
+
+    <!-- Adaugă un buton de submit -->
+    <button type="button" onclick="submitForm()">Submit</button>
+  </form>
+
+  <div id="piechart" class="chart" align="center"></div>
+  <label htmlFor="carSelect">Selecteaza o masina:</label>
+  <select id="carSelect"></select>
+  <div id="curve_chart" class="chart" align="center"></div>
+
+  <label htmlFor="carSelect">Selecteaza o masina:</label>
+  <select id="carSelect1"></select>
+
+  <label htmlFor="carSelect">Selecteaza o masina:</label>
+  <select id="carSelect2"></select>
+
+  <span id='colchart_before' style='width: 450px; height: 250px; display: inline-block'></span>
+  <span id='colchart_after' style='width: 450px; height: 250px; display: inline-block'></span>
+  <span id='colchart_diff' style='width: 450px; height: 250px; display: inline-block'></span>
+  <span id='barchart_diff' style='width: 450px; height: 250px; display: inline-block'></span>
+
+</div>
+</body>
+</html>
