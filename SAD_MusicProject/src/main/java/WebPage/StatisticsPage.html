@@ -1,10 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load("current", {packages:["corechart"]});
+        google.charts.setOnLoadCallback(drawChart);
+
+        var apiUrl = "http://localhost:9090/api/vanzari-masini/statistici/name";
+        var carNames = []; // Array pentru a stoca numele de mașini
+
+        // Funcție pentru a face o cerere către API și a obține numele de mașini
+
+
+        function fetchCarNames() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    carNames = data; // Salvează numele de mașini în array
+                    console.log("Data: ", data); // Adaugă această linie pentru a afișa datele în consolă
+                    populateDropdowns(); // Populează dropdown-urile după ce ai obținut numele
+                    drawChart(); // Apelăm drawChart aici, după ce avem datele
+                })
+                .catch(error => console.error('Error fetching car names:', error));
+        }
+
+        // Funcție pentru a popula dropdown-urile cu numele de mașini
+        // Funcție pentru a popula dropdown-urile cu numele de mașini
+        function populateDropdowns() {
+            var dropdowns = document.querySelectorAll('select'); // Selectează toate dropdown-urile
+
+            // Iterează prin dropdown-uri
+            dropdowns.forEach(function(dropdown) {
+                // Curăță opțiunile existente înainte de a adăuga altele noi
+                dropdown.options.length = 0;
+
+                // Adaugă opțiunile în dropdown
+                carNames.forEach(function(carName, index) {
+                    dropdown.options[index] = new Option(carName, carName);
+                });
+            });
+        }
+
+        function drawChart() {
+            fetchCarNames(); // La încărcarea paginii, obține numele de mașini și populează dropdown-urile
+
+            // Obține valorile selectate din dropdown-uri
+            var selectedTask1 = document.getElementById('taskSelect1').value;
+            var selectedTask2 = document.getElementById('taskSelect2').value;
+            var selectedTask3 = document.getElementById('taskSelect3').value;
+            var selectedTask4 = document.getElementById('taskSelect4').value;
+            var selectedTask5 = document.getElementById('taskSelect5').value;
+
+            // // Verifică dacă există valori duplicate
+            // if (areDuplicates([selectedTask1, selectedTask2, selectedTask3, selectedTask4, selectedTask5])) {
+            //     alert("Nu sunt permise valori duplicate!");
+            //     return; // Nu actualiza graficul dacă există valori duplicate
+            // }
+
+            var data = google.visualization.arrayToDataTable([
+                ['Task', 'Hours per Day'],
+                [selectedTask1, getHoursForTask(selectedTask1)],
+                [selectedTask2, getHoursForTask(selectedTask2)],
+                [selectedTask3, getHoursForTask(selectedTask3)],
+                [selectedTask4, getHoursForTask(selectedTask4)],
+                [selectedTask5, getHoursForTask(selectedTask5)]
+            ]);
+
+            var options = {
+                title: 'My Daily Activities',
+                is3D: true,
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+            chart.draw(data, options);
+        }
+
+        // Funcție pentru a obține orele corespunzătoare unui Task
+        function getHoursForTask(task) {
+            // Adaugă aici condițiile pentru fiecare Task
+            switch(task) {
+                case 'Work':
+                    return 5; // Exemplu: 5 ore pentru Work
+                case 'Eat':
+                    return 2; // Exemplu: 2 ore pentru Eat
+                case 'Commute':
+                    return 1; // Exemplu: 1 oră pentru Commute
+                case 'Watch TV':
+                    return 3; // Exemplu: 3 ore pentru Watch TV
+                case 'Sleep':
+                    return 8; // Exemplu: 8 ore pentru Sleep
+                default:
+                    return 0; // Valoare implicită
+            }
+        }
+
+        // Funcție pentru a verifica dacă există valori duplicate într-un array
+        function areDuplicates(array) {
+            return (new Set(array)).size !== array.length;
+        }
+    </script>
 </head>
 <body>
-$END$
+<!-- Adaugă dropdown-uri pentru a selecta Task-urile -->
+
+<select id="taskSelect1"></select>
+<select id="taskSelect2"></select>
+<select id="taskSelect3"></select>
+<select id="taskSelect4"></select>
+<select id="taskSelect5"></select>
+
+
+<!-- Div-ul în care va fi afișat graficul -->
+<div id="piechart_3d" style="width: 900px; height: 500px;"></div>
 </body>
 </html>
